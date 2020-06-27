@@ -376,13 +376,7 @@ public class ItemManager : MonoBehaviour
         //random index
         //item_index = Random.Range(11,12);
 
-        int x = Random.Range(0, item_gameobjects.Length);
-
-        if(x == 1) { item_index = 0; }
-        if (x == 5) { item_index = 7; }
-        if (x == 2) { item_index = 11; }
-        if(x == 3) { item_index = 12; }
-        if(x == 4) { item_index = 13; }
+        item_index = Random.Range(0, item_gameobjects.Length);
 
 
         your_item.sprite = items_possible[item_index];
