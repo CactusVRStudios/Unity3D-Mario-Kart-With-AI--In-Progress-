@@ -15,18 +15,25 @@ public class ComputerDriver : MonoBehaviour
 
     [Header("Movement")]
     public Transform path;
-    private List<Transform> nodes = new List<Transform>();
-    private int current_node = 0;
+    [HideInInspector]
+    public List<Transform> nodes = new List<Transform>();
+    [HideInInspector]
+    public int current_node = 0;
 
     public float max_steer_angle;
     public float max_speed;
-    float current_speed;
+    [HideInInspector]
+    public float current_speed;
+    [HideInInspector]
+    public float REALSPEED;
     public float Desired_Max_Speed;
     bool grounded = false;
 
     float dir;
-    bool driftright;
-    bool driftleft;
+    [HideInInspector]
+    public bool driftright;
+    [HideInInspector]
+    public bool driftleft;
     bool hop_anim = true;
     float drift_time = 0;
     public GameObject DriftPS;
@@ -36,8 +43,20 @@ public class ComputerDriver : MonoBehaviour
     [Header("BOOST")]
     public float Boost_Speed;
     public GameObject BoostPS;
-    bool boost;
-    float boost_time = 0;
+    [HideInInspector]
+    public bool boost;
+    [HideInInspector]
+    public float boost_time = 0;
+    public GameObject BoostBurstPS;
+    public GameObject dustPS;
+    public Transform[] tires;
+
+    bool slowDown;
+
+    [HideInInspector]
+    public bool GLIDER_FLY = false;
+    private bool aboutToFly;
+    public GameObject GLider;
     
 
     public Animator DriverAnim;
@@ -69,8 +88,9 @@ public class ComputerDriver : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-
-        if (RACE_MANAGER.RACE_STARTED)
+        carTires();
+        REALSPEED = transform.InverseTransformDirection(rb.velocity).z;
+        if (RACE_MANAGER.RACE_STARTED && !item_manage.isBullet)
         {
             steer();
             Move();
@@ -106,8 +126,51 @@ public class ComputerDriver : MonoBehaviour
                         currentboost.Stop();
                 }
             }
+
+            if(REALSPEED > 40 && !driftleft && !driftright && !GLIDER_FLY)
+            {
+                for(int i = 0; i < dustPS.transform.childCount; i++)
+                {
+                    dustPS.transform.GetChild(i).GetComponent<ParticleSystem>().Play();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < dustPS.transform.childCount; i++)
+                {
+                    dustPS.transform.GetChild(i).GetComponent<ParticleSystem>().Stop();
+                }
+            }
+            
         }
-        
+        else if (item_manage.isBullet)
+        {
+            Vector3 lookat = item_manage.path.GetChild(item_manage.currentWayPoint).position;
+
+            float dir = 0;
+            rb.AddForce(Vector3.down * 10000 * Time.deltaTime, ForceMode.Acceleration);
+            Ray ground = new Ray(transform.position, -transform.up);
+            RaycastHit hit;
+            if (Physics.Raycast(ground, out hit, 10, mask))
+            {
+                //DIRECTION TO FACE
+                Quaternion rot = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(transform.up * 2, hit.normal) * transform.rotation, 6 * Time.deltaTime);
+                //angle calc
+                Debug.DrawRay(hit.point, hit.normal, Color.white, 30f);
+                Vector3 myangle = item_manage.path.GetChild(item_manage.currentWayPoint).position - transform.position;
+                Vector3 angle = Vector3.Cross(transform.forward, myangle);
+                dir = Vector3.Dot(angle, transform.up);
+
+                float none = 0;
+
+                float y = Mathf.SmoothDamp(transform.eulerAngles.y, transform.eulerAngles.y + dir, ref none, 3f * Time.deltaTime);
+                transform.eulerAngles = new Vector3(rot.eulerAngles.x, y, rot.eulerAngles.z);
+
+                //MOVE FORWARD
+                current_speed = 115;
+                rb.velocity = transform.forward * current_speed;
+            }
+        }
 
 
     }
@@ -124,11 +187,13 @@ public class ComputerDriver : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(ground, out hit, 10, mask))
         {
-             Quaternion rot = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(transform.up * 2, hit.normal) * transform.rotation, 6 * Time.deltaTime);
+            if(hit.normal.y > 0.5f)
+            {
+                transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(transform.up * 2, hit.normal) * transform.rotation, 6 * Time.deltaTime);
+            }
 
 
             //angle calc
-            Debug.DrawRay(hit.point, hit.normal, Color.white, 30f);
             Vector3 myangle = nodes[current_node].position - transform.position;
             Vector3 angle = Vector3.Cross(transform.forward, myangle);
             dir = Vector3.Dot(angle, transform.up);
@@ -140,7 +205,7 @@ public class ComputerDriver : MonoBehaviour
 
            
 
-            transform.eulerAngles =new Vector3(rot.eulerAngles.x, y, rot.eulerAngles.z);
+            transform.eulerAngles =new Vector3(transform.eulerAngles.x, y, transform.eulerAngles.z);
         }
 
     }
@@ -151,7 +216,10 @@ public class ComputerDriver : MonoBehaviour
             current_speed = Mathf.Lerp(current_speed, max_speed, 0.5f * Time.deltaTime);
 
 
-        rb.velocity = transform.forward * current_speed;
+        Vector3 vel = transform.forward * current_speed;
+        vel.y = rb.velocity.y;
+        rb.velocity = vel;
+        rb.AddForce(Vector3.down * 5000 * Time.deltaTime, ForceMode.Acceleration);
 
         if (!grounded && !boost)
         {
@@ -171,6 +239,15 @@ public class ComputerDriver : MonoBehaviour
             current_speed = Mathf.Lerp(current_speed, 0, 3 * Time.deltaTime);
 
         }
+
+        if(GLIDER_FLY || aboutToFly)
+        {
+            Vector3 GlideVel = rb.velocity;
+            GlideVel.y *= 0.5f;
+            rb.velocity = GlideVel;
+        }
+
+
 
 
     }
@@ -322,6 +399,21 @@ public class ComputerDriver : MonoBehaviour
             DriverAnim.SetBool("TurnRight", false);
         }
     }
+    void carTires()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+
+            if (current_speed < 6.5 && current_speed > -6.5)
+            {
+                tires[i].transform.Rotate(-90 * Time.deltaTime * current_speed * 0.015f, 0, 0);
+            }
+            else
+            {
+                tires[i].transform.Rotate(-90 * Time.deltaTime * current_speed / 5f, 0, 0);
+            }
+        }
+    }
 
 
     
@@ -330,7 +422,7 @@ public class ComputerDriver : MonoBehaviour
 
     
 
-    private IEnumerator OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
         //next waypoint
         if(other.transform == nodes[current_node])
@@ -342,23 +434,63 @@ public class ComputerDriver : MonoBehaviour
             else
                 current_node++;
 
-            other.GetComponent<BoxCollider>().enabled = false;
-
-            yield return new WaitForSeconds(2);
-            other.GetComponent<BoxCollider>().enabled = true;
 
         }
 
-        
-        
+        if(other.gameObject.tag == "SlowDownComputer")
+        {
+            if (boost_time < 1)
+            {
+                Desired_Max_Speed = 40;
+                current_speed = Desired_Max_Speed;
+            }
+
+        }
+
+        if (other.gameObject.tag == "GliderPanelFly")
+        {
+            aboutToFly = true;
+        }
+
+
+
     }
 
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.tag == "SlowDownComputer")
+        {
+            Desired_Max_Speed = 70;
+        }
 
+        if (other.gameObject.tag == "GliderPanelFly")
+        {
+            if (!GLIDER_FLY)
+            {
+                transform.GetChild(0).GetChild(0).GetComponent<Animator>().SetTrigger("Glide1");
+            }
+            GLIDER_FLY = true;
+            GLider.GetComponent<Animator>().SetBool("GliderOpen", true);
+            GLider.GetComponent<Animator>().SetBool("GliderClose", false);
+
+        }
+    }
+    private void OnCollisionEnter(Collision collision)
+    {
+        if(collision.gameObject.tag == "Ground" || collision.gameObject.tag == "Dirt")
+        {
+            GLIDER_FLY = false;
+            aboutToFly = false;
+            GLider.GetComponent<Animator>().SetBool("GliderOpen", false);
+            GLider.GetComponent<Animator>().SetBool("GliderClose", true);
+        }
+    }
     private void OnCollisionStay(Collision other)
     {
         if (other.gameObject.tag == "Ground")
         {
             grounded = true;
+
         }
         if (other.gameObject.tag == "Dirt")
         {

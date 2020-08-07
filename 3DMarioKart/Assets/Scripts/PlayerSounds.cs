@@ -14,6 +14,7 @@ public class PlayerSounds : MonoBehaviour
     public AudioSource[] MarioStarSounds;
     public AudioSource[] BulletSounds;
     public AudioSource Mario_Glider;
+    public AudioSource marioFirstPlace;
 
     [HideInInspector]
     public int sound_count = 0;
@@ -33,6 +34,8 @@ public class PlayerSounds : MonoBehaviour
         kart_sounds();
         if (sound_count == Mario_Boost_Sounds.Length)
             sound_count = 0;
+
+        kartIdle.volume = Mathf.Lerp(kartIdle.volume, 1, 0.5f * Time.deltaTime);
 
     }
 
@@ -108,22 +111,33 @@ public class PlayerSounds : MonoBehaviour
             {
                 kartSound.pitch = Mathf.Lerp(kartSound.pitch, 1f, 5f * Time.deltaTime);
             }
-            else
+            else if (playerscript.Boost && !playerscript.GLIDER_FLY)
             {
                 kartSound.pitch = Mathf.Lerp(kartSound.pitch, 1.3f, 5f * Time.deltaTime);
             }
+            else if( playerscript.Boost && playerscript.GLIDER_FLY)
+            {
+                kartSound.pitch = Mathf.Lerp(kartSound.pitch, 1.5f, 5f * Time.deltaTime);
+            }
+            
         }
         if (playerscript.currentspeed < 10 || item_script.isBullet)
         {
             kartSound.Stop();
         }
-        if (playerscript.GLIDER_FLY)
+        if (playerscript.GLIDER_FLY && !RACE_MANAGER.RACE_COMPLETED)
         {
             kartSound.volume = 0.3f;
-        }
-        else
+        } 
+        else if(!playerscript.GLIDER_FLY && !RACE_MANAGER.RACE_COMPLETED)
         {
             kartSound.volume = 0.45f;
+        }
+
+        if (RACE_MANAGER.RACE_COMPLETED && kartSound.volume > 0)
+        {
+
+            kartSound.volume -= 0.01f;
         }
     }
     

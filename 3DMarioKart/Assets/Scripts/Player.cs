@@ -14,6 +14,8 @@ public class Player : MonoBehaviour
     public float max_speed;
     [HideInInspector]
     public float currentspeed = 0;
+    [HideInInspector]
+    public float REALCURRENTSPEED;
 
     private Rigidbody rb;
 
@@ -81,14 +83,17 @@ public class Player : MonoBehaviour
     public GameObject glider;
     [HideInInspector]
     public bool GLIDER_FLY = false;
-    bool glider_close_confirm = false;
+    private bool aboutTOFly = false; //this is to get the rb drag ready before we start flying
+    private bool cancelAddforceDown = false; //in some areas, we want not too strong gravity
+    bool glider_close_confirm = false; //to prevent  from closing to early
     float gliderSlerpRate = 0;
     float glidingTime = 0;
+    bool glideTrick = false;
 
     //jump panel
     [HideInInspector]
     public bool JUMP_PANEL = false;
-    private float downForce = -300000;
+    private float downForce = -250000;
 
 
     public Animator Driver;
@@ -101,6 +106,7 @@ public class Player : MonoBehaviour
     public bool has_item_hold = false;
     public GameObject ItemBox;
     private ItemManager item_manager;
+    private LapCounter lapCounter;
 
     //faces
     [Header("Faces")]
@@ -110,6 +116,7 @@ public class Player : MonoBehaviour
 
     //shell and banana
     public bool HitByBanana_ = false;
+    public bool HitByShell_ = false;
     private bool playSpinAnim = true;
     bool invincible = false;
 
@@ -117,6 +124,16 @@ public class Player : MonoBehaviour
 
     //collision cooldown
     float collideCooldown = 0;
+
+    //position variable before change
+    int lastPos = 2;
+    public GameObject positionUI;
+    private bool showUI;
+
+    public Transform RaceEndPath;
+    int currentWayPoint = 0;
+    float raceEndTime = 0;
+    
 
 
 
@@ -134,6 +151,7 @@ public class Player : MonoBehaviour
 
         playersounds = GetComponent<PlayerSounds>();
         item_manager = GetComponent<ItemManager>();
+        lapCounter = GetComponent<LapCounter>();
 
         rotateStrengthWithStar = desired_rotate_strength + 15;
 
@@ -143,8 +161,7 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-
-        if (RACE_MANAGER.RACE_STARTED && !item_manager.isBullet)
+        if (RACE_MANAGER.RACE_STARTED && !item_manager.isBullet && !RACE_MANAGER.RACE_COMPLETED)
         {
             AccelBeforeStartDust.GetChild(0).GetComponent<ParticleSystem>().Stop();
             AccelBeforeStartDust.GetChild(1).GetComponent<ParticleSystem>().Stop();
@@ -183,22 +200,19 @@ public class Player : MonoBehaviour
 
 
             //dust particles
-            if (currentspeed > 30 && !drift_left && !drift_right && !GLIDER_FLY && !JUMP_PANEL && !Input.GetKey(KeyCode.S) && grounded && !item_manager.isBullet)
+            if (REALCURRENTSPEED > 30 && !drift_left && !drift_right && !GLIDER_FLY && !JUMP_PANEL && !Input.GetKey(KeyCode.S) && grounded && !item_manager.isBullet)
             {
                 dustParticles.GetChild(0).GetComponent<ParticleSystem>().Play();
-            }
-            else
-            {
-                dustParticles.GetChild(0).GetComponent<ParticleSystem>().Stop();
-            }
-            if (currentspeed > 30 && !drift_left && !drift_right && !GLIDER_FLY && !JUMP_PANEL && !Input.GetKey(KeyCode.S) && grounded && !item_manager.isBullet)
-            {
                 dustParticles.GetChild(1).GetComponent<ParticleSystem>().Play();
             }
             else
             {
+                dustParticles.GetChild(0).GetComponent<ParticleSystem>().Stop();
                 dustParticles.GetChild(1).GetComponent<ParticleSystem>().Stop();
+
             }
+            
+            
 
             exhaustDust.GetChild(0).GetComponent<ParticleSystem>().Stop();
             exhaustDust.GetChild(1).GetComponent<ParticleSystem>().Stop();
@@ -228,7 +242,7 @@ public class Player : MonoBehaviour
             Vector3 lookat = item_manager.path.GetChild(item_manager.currentWayPoint).position;
 
             float dir = 0;
-
+            rb.AddForce(Vector3.down * 10000 * Time.deltaTime, ForceMode.Acceleration);
             Ray ground = new Ray(transform.position, -transform.up);
             RaycastHit hit;
             if (Physics.Raycast(ground, out hit, 10, mask))
@@ -251,7 +265,7 @@ public class Player : MonoBehaviour
                 rb.velocity = transform.forward * currentspeed;
             }
         }
-        else if(!RACE_MANAGER.RACE_STARTED)
+        else if(!RACE_MANAGER.RACE_STARTED && !RACE_MANAGER.RACE_COMPLETED)
         {
             if (Input.GetKey(KeyCode.Space))
             {
@@ -278,7 +292,41 @@ public class Player : MonoBehaviour
                 beforeStartAccelTime = 0;
             }
         }
- 
+
+        if (RACE_MANAGER.RACE_STARTED && !RACE_MANAGER.RACE_COMPLETED)
+            PositionUI();
+
+        if (RACE_MANAGER.RACE_COMPLETED)
+        {
+            raceEndTime += Time.deltaTime;
+            steerOnPath();
+            moveOnPath();
+            raceEndCarMoveParts();
+            {
+                Boost_time = 0;
+                Boost = false;
+                for (int i = 0; i < 2; i++)
+                {
+                    ParticleSystem currentboost = Boost_PS.transform.GetChild(i).GetComponent<ParticleSystem>();
+                    currentboost.Stop();                         
+                }
+            }
+            if(lapCounter.endPosition < 6)
+            {
+                if(raceEndTime % 4 < 0.2f)
+                {
+                    MarioFace.material = faces[2];
+                }
+                else
+                {
+                    MarioFace.material = faces[3];
+                }
+
+            }
+           
+        }
+
+
     }
 
     private void LateUpdate()
@@ -328,10 +376,11 @@ public class Player : MonoBehaviour
     {
         if (collision.gameObject.tag == "Ground" || collision.gameObject.tag == "Dirt")
         {
+            //when I hit the ground after jumping off a jump panel
             if (JUMP_PANEL)
             {
                 JUMP_PANEL = false;
-                downForce = -200000;
+                downForce = -250000;
                 playersounds.effectSounds[7].Play();
                 playersounds.effectSounds[4].Play();
                 playersounds.effectSounds[5].Play();
@@ -349,6 +398,8 @@ public class Player : MonoBehaviour
             }
 
             GLIDER_FLY = false;
+            aboutTOFly = false;
+            glideTrick = false;
             glidingTime = 0;
           
             playersounds.effectSounds[3].Stop();
@@ -369,6 +420,7 @@ public class Player : MonoBehaviour
                 Destroy(collision.gameObject);
             }
         }
+       
         if(collision.gameObject.tag == "Opponent")
         {
             if(collideCooldown <= 0)
@@ -479,11 +531,10 @@ public class Player : MonoBehaviour
         }
 
     }
-
     IEnumerator OnTriggerEnter(Collider other)
     {
 
-        if (other.gameObject.tag == "ItemBox")
+        if (other.gameObject.tag == "ItemBox" && !RACE_MANAGER.RACE_COMPLETED)
         {
             item_manager.PlaySelectsound.Play();
             hasitem = true; //will trigger a method in the item manager script
@@ -544,39 +595,66 @@ public class Player : MonoBehaviour
 
         }
 
+        if(other.gameObject.tag == "GliderPanelFly")
+        {
+            aboutTOFly = true;
+        }
+
+        if(other.gameObject.tag == "CancelDownForce")
+        {
+            cancelAddforceDown = true;
+        }
+
+        //next waypoint
+        if (other.transform == RaceEndPath.GetChild(currentWayPoint))
+        {
+            if (currentWayPoint == RaceEndPath.childCount - 1) //if last node, set the next node to first
+            {
+                currentWayPoint = 0;
+            }
+            else
+                currentWayPoint++;
+
+
+        }
+
     }
     private IEnumerator OnTriggerExit(Collider other)
     {
         if (other.gameObject.tag == "GliderPanel")
         {
-            Boost_time = 2;
-            Boost = true;
-            playersounds.effectSounds[8].Play();
-
-            max_speed = boost_speed;
-            for (int i = 0; i < BoostBurstPS.transform.childCount; i++)
+            if(gameObject.tag == "Player")
             {
-                BoostBurstPS.transform.GetChild(i).GetComponent<ParticleSystem>().Play(); //left and right included
-            } //burst boost
+                Boost_time = 2;
+                Boost = true;
+                playersounds.effectSounds[8].Play();
+
+                max_speed = boost_speed;
+                for (int i = 0; i < BoostBurstPS.transform.childCount; i++)
+                {
+                    BoostBurstPS.transform.GetChild(i).GetComponent<ParticleSystem>().Play(); //left and right included
+                } //burst boost
 
 
 
-            if (playersounds.Check_if_playing())
-            {
-                playersounds.Mario_Boost_Sounds[playersounds.sound_count].Play();
-                playersounds.sound_count++;
+                if (playersounds.Check_if_playing())
+                {
+                    playersounds.Mario_Boost_Sounds[playersounds.sound_count].Play();
+                    playersounds.sound_count++;
+                }
+
+                if (GLIDER_FLY)
+                {
+                    float force = 20000;
+                    for (int i = 0; i < 60; i++)
+                    {
+                        rb.AddForce(Vector3.up * force * Time.deltaTime, ForceMode.Impulse);
+                        force -= 300;
+                        yield return new WaitForSeconds(0.01f);
+                    }
+                }
             }
-
-            for (int i = 0; i < 40; i++)
-            {
-               transform.eulerAngles += new Vector3(0.1f, 0, 0);
-               yield return new WaitForSeconds(0.02f);
-                rb.AddForce(Vector3.down * 10000 * Time.deltaTime, ForceMode.Acceleration);
-            } //rotation
-            
-
-            
-
+     
 
         }
         if(other.gameObject.tag == "GliderPanelFly")
@@ -616,8 +694,11 @@ public class Player : MonoBehaviour
             drift_right = false;
             drift_left = false;
 
+            //trick
             if (currentspeed > 60)
             {
+                GLIDER_FLY = true;
+                glideTrick = true;
                 transform.GetChild(0).GetChild(0).GetComponent<Animator>().SetTrigger("Glide1");
                 playersounds.effectSounds[2].Play();
 
@@ -625,7 +706,6 @@ public class Player : MonoBehaviour
 
                 glider.GetComponent<Animator>().SetBool("GliderOpen", true);
                 glider.GetComponent<Animator>().SetBool("GliderClose", false);
-                GLIDER_FLY = true;
                 glider_close_confirm = false;
 
                 yield return new WaitForSeconds(0.35f);
@@ -658,25 +738,53 @@ public class Player : MonoBehaviour
             if(GLIDER_FLY)
                 playersounds.effectSounds[3].Play();
         }
-        
+
+        if (other.gameObject.tag == "CancelDownForce")
+        {
+            cancelAddforceDown = false;
+        }
+
 
     }
-
     private void OnTriggerStay(Collider other)
     {
         if (other.gameObject.tag == "ColliderInAir" && (glidingTime < 1 || glidingTime > 4))
         {
             rb.AddForce(Vector3.down * 15000 * Time.deltaTime, ForceMode.Acceleration);
         }
+        if (other.gameObject.tag == "GliderPanelFly")
+        {
+            aboutTOFly = true;
+        }
     }
 
     void Move()
     {
+        REALCURRENTSPEED = transform.InverseTransformDirection(rb.velocity).z;
         collideCooldown -= Time.deltaTime;
-
+        if(!GLIDER_FLY && !JUMP_PANEL && !cancelAddforceDown)
+            rb.AddForce(Vector3.down * 5000 * Time.deltaTime, ForceMode.Acceleration);
         //input speed into velocity
-        rb.velocity = transform.forward * currentspeed;
+        Vector3 velocity = transform.forward * currentspeed;
+        if(velocity.y > rb.velocity.y)
+        {
+            velocity.y = rb.velocity.y;
+        }
+        rb.velocity = velocity;
 
+        if(GLIDER_FLY || aboutTOFly)
+        {
+            Vector3 newVel = rb.velocity;
+            if (!Input.GetKey(KeyCode.DownArrow))
+            {
+                newVel.y *= 0.75f;
+            }
+            else
+            {
+                newVel.y *= 0.45f;
+            }
+            rb.velocity = newVel;
+        }
         if (GLIDER_FLY)
         {
             if (!Input.GetKey(KeyCode.Space))
@@ -752,14 +860,43 @@ public class Player : MonoBehaviour
         if (GLIDER_FLY)
         {
             glidingTime += Time.deltaTime;
-            glider.GetComponent<Animator>().SetBool("GliderOpen", true);
-            glider.GetComponent<Animator>().SetBool("GliderClose", false);
+            if (glideTrick) //if trick happens, do this, else do regular
+            {
+                if(glidingTime > 0.4)
+                {
+                    glider.GetComponent<Animator>().SetBool("GliderOpen", true);
+                    glider.GetComponent<Animator>().SetBool("GliderClose", false);
+                }
+            }
+            else
+            {
+                glider.GetComponent<Animator>().SetBool("GliderOpen", true);
+                glider.GetComponent<Animator>().SetBool("GliderClose", false);
+            }
+            
 
             Transform kart = transform;
 
             if (Input.GetKey(KeyCode.UpArrow))
             {
-                transform.Rotate(new Vector3(10, transform.rotation.y, transform.rotation.z), 25f * Time.deltaTime);
+                kart.rotation = Quaternion.SlerpUnclamped(kart.rotation, Quaternion.Euler(25, kart.eulerAngles.y, kart.eulerAngles.z), 1.5f * Time.deltaTime);
+                rb.AddForce(Vector3.down * 2000 * Time.deltaTime, ForceMode.Acceleration);
+            }
+            else if (Input.GetKey(KeyCode.DownArrow))
+            {
+                float angle = transform.localEulerAngles.x;
+                angle = (angle > 180) ? angle - 360 : angle;
+
+                if (angle > -20)
+                {
+                    float none = 0;
+                    gliderSlerpRate = Mathf.SmoothDamp(gliderSlerpRate, 2, ref none, 0.05f);
+                    kart.rotation = Quaternion.SlerpUnclamped(kart.rotation, Quaternion.Euler(-25, kart.eulerAngles.y, kart.eulerAngles.z), 1.5f * Time.deltaTime);
+                }
+            }
+            else
+            {
+                kart.rotation = Quaternion.SlerpUnclamped(kart.rotation, Quaternion.Euler(0, kart.eulerAngles.y, kart.eulerAngles.z), 1.5f * Time.deltaTime);
             }
 
 
@@ -792,8 +929,6 @@ public class Player : MonoBehaviour
                 {
                     float angle = transform.localEulerAngles.z;
                     angle = (angle > 180) ? angle - 360 : angle;
-
-                    Debug.Log(angle);
                     if (angle > -40)
                     {
                         float none = 0;
@@ -815,7 +950,8 @@ public class Player : MonoBehaviour
         }
         if (JUMP_PANEL)
         {
-            downForce = Mathf.Lerp(downForce, 150000, 2.5f * Time.deltaTime);
+            rb.velocity = transform.forward * currentspeed;
+            downForce = Mathf.Lerp(downForce, 200000, 2.5f * Time.deltaTime);
             rb.AddForce(Vector3.down * downForce * Time.deltaTime, ForceMode.Acceleration);
 
             transform.localEulerAngles += new Vector3(0.05f, 0, 0);
@@ -860,13 +996,22 @@ public class Player : MonoBehaviour
                 transform.GetChild(0).GetChild(0).GetComponent<Animator>().SetTrigger("BananaHit");
                 playSpinAnim = false;
             }
-            currentspeed = Mathf.Lerp(currentspeed, 0, 3 * Time.deltaTime);
-
+            currentspeed = Mathf.Lerp(currentspeed, 0, 4.5f * Time.deltaTime);
+        }
+        if (HitByShell_)
+        {
+            if (playSpinAnim && !invincible)
+            {
+                invincible = true;
+                transform.GetChild(0).GetChild(0).GetComponent<Animator>().SetTrigger("ShellHit");
+                playSpinAnim = false;
+            }
+            currentspeed = Mathf.Lerp(currentspeed, 0, 4.5f * Time.deltaTime);
         }
     }
     void Steer()
     {
-        float force = 0;
+        float force = 30000;
 
         //steer
         if (Input.GetAxis("Horizontal") != 0)
@@ -888,11 +1033,13 @@ public class Player : MonoBehaviour
                 //force
                 if (drifting)
                 {
-                    force = Mathf.SmoothStep(force, -8500, 10f * Time.deltaTime);
-                    rb.velocity += transform.right * force * Time.deltaTime;
+                    //force = Mathf.SmoothStep(force, -110000, 10f * Time.deltaTime);
+                    rb.AddForce(-transform.right * force * Time.deltaTime, ForceMode.Acceleration);
+
+
 
                 }
-                
+
 
             }
             if (drift_left && !drift_right)
@@ -903,8 +1050,8 @@ public class Player : MonoBehaviour
 
                 if (drifting)
                 {
-                    force = Mathf.SmoothStep(force, 8500, 10f * Time.deltaTime);
-                    rb.velocity += transform.right * force * Time.deltaTime;
+                    //force = Mathf.SmoothStep(force, 110000, 10f * Time.deltaTime);
+                    rb.AddForce(transform.right * force * Time.deltaTime, ForceMode.Acceleration);
                 }
                 
             }
@@ -945,7 +1092,7 @@ public class Player : MonoBehaviour
         }
 
         //while v is pressed, you are drifting
-        if (Input.GetKey(KeyCode.V) && grounded && currentspeed > 40 && Input.GetAxis("Horizontal") != 0 && ! GLIDER_FLY && !JUMP_PANEL)
+        if (Input.GetKey(KeyCode.V) && grounded && currentspeed > 40 && Input.GetAxis("Horizontal") != 0 && ! GLIDER_FLY && !JUMP_PANEL && !HitByBanana_ && !HitByShell_)
         {
             rotate_strength = Mathf.Lerp(rotate_strength, desired_rotate_strength, 3 * Time.deltaTime);
             if (drift_direction == -1)
@@ -1239,7 +1386,16 @@ public class Player : MonoBehaviour
             if (Physics.Raycast(ground, out hit, 4, mask) && hit.normal.y > 0.5f)
             {
                 transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(transform.up * 2, hit.normal) * transform.rotation, 7.5f * Time.deltaTime);
-                Debug.DrawRay(hit.point, hit.normal, Color.white, 20f);
+            }
+        }
+        if(glidingTime > 3f)
+        {
+            //ground normal rotation
+            Ray ground = new Ray(raycastPos.position, -transform.up);
+            RaycastHit hit;
+            if (Physics.Raycast(ground, out hit, 4, mask) && hit.normal.y > 0.5f && hit.transform.tag == "GliderPanel")
+            {
+                transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(transform.up * 2, hit.normal) * transform.rotation, 7.5f * Time.deltaTime);
             }
         }
       
@@ -1249,6 +1405,21 @@ public class Player : MonoBehaviour
     {
         
     }
+
+    void PositionUI()
+    {
+        if(!showUI && lapCounter.totalCheckpointVal > 1)
+        {
+            positionUI.GetComponent<Animator>().SetTrigger("Change");
+            showUI = true;
+        }
+        if(lastPos != lapCounter.Position && lapCounter.totalCheckpointVal > 1)
+        {
+            lastPos = lapCounter.Position;
+            positionUI.GetComponent<Animator>().SetTrigger("Change");
+        }
+    }
+    
 
     void mario_face()
     {
@@ -1264,13 +1435,143 @@ public class Player : MonoBehaviour
     {
         HitByBanana_ = true;
         Boost_time = 0;
+        stopDrift();
         yield return new WaitForSeconds(1.25f);
         HitByBanana_ = false;
         playSpinAnim = true;
         invincible = false;
+
+    }
+    public IEnumerator hitByShell()
+    {
+        HitByShell_ = true;
+        Boost_time = 0;
+        stopDrift();
+        yield return new WaitForSeconds(1.25f);
+        HitByShell_ = false;
+        playSpinAnim = true;
+        invincible = false;
+
     }
 
+    void steerOnPath()
+    {
+        Vector3 lookat = RaceEndPath.GetChild(currentWayPoint).position;
 
+        Ray ground = new Ray(transform.position, -transform.up);
+        RaycastHit hit;
+        if (Physics.Raycast(ground, out hit, 10, mask))
+        {
+            Quaternion rot = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(transform.up * 2, hit.normal) * transform.rotation, 6 * Time.deltaTime);
+
+
+            //angle calc
+            Vector3 myangle = RaceEndPath.GetChild(currentWayPoint).position - transform.position;
+            Vector3 angle = Vector3.Cross(transform.forward, myangle);
+            float dir = Vector3.Dot(angle, transform.up);
+
+            float none = 0;
+
+            float y = Mathf.SmoothDamp(transform.eulerAngles.y, transform.eulerAngles.y + dir, ref none, 6.5f * Time.deltaTime);
+
+
+
+
+            transform.eulerAngles = new Vector3(rot.eulerAngles.x, y, rot.eulerAngles.z);
+        }
+    }
+    void moveOnPath()
+    {
+        Vector3 vel = transform.forward * currentspeed;
+        vel.y = rb.velocity.y;
+        rb.velocity = vel;
+        rb.AddForce(Vector3.down * 5000 * Time.deltaTime, ForceMode.Acceleration);
+
+    }
+    void raceEndCarMoveParts()
+    {
+        //spin
+        for (int i = 0; i < 4; i++)
+        {
+
+            if (currentspeed < 6.5 && currentspeed > -6.5)
+            {
+                tires[i].transform.Rotate(-90 * Time.deltaTime * currentspeed * 0.015f, 0, 0);
+            }
+            else
+            {
+                tires[i].transform.Rotate(-90 * Time.deltaTime * currentspeed / 5f, 0, 0);
+            }
+        }
+
+        //tire turn calc
+        Ray ground = new Ray(transform.position, -transform.up);
+        RaycastHit hit;
+        float dir = 0;
+        if (Physics.Raycast(ground, out hit, 10, mask))
+        {
+            Quaternion rot = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(transform.up * 2, hit.normal) * transform.rotation, 6 * Time.deltaTime);
+            //angle calc
+            Vector3 myangle = RaceEndPath.GetChild(currentWayPoint).position - transform.position;
+            Vector3 angle = Vector3.Cross(transform.forward, myangle);
+            dir = Vector3.Dot(angle, transform.up);
+        }
+
+        if (dir > 1)
+        {
+            FrontRightTire.transform.localEulerAngles = Vector3.Lerp(FrontRightTire.transform.localEulerAngles, new Vector3(0, 205, 0), 8 * Time.deltaTime);
+            FrontLeftTire.transform.localEulerAngles = Vector3.Lerp(FrontLeftTire.transform.localEulerAngles, new Vector3(0, 205, 0), 8 * Time.deltaTime);
+            steeringwheel.transform.localEulerAngles = Vector3.Lerp(steeringwheel.transform.localEulerAngles, new Vector3(0, 205, 0), 8 * Time.deltaTime);
+        }
+        if (dir >= -1 && dir <= 1)
+        {
+            FrontRightTire.transform.localEulerAngles = Vector3.Lerp(FrontRightTire.transform.localEulerAngles, new Vector3(0, 180, 0), 8 * Time.deltaTime);
+            FrontLeftTire.transform.localEulerAngles = Vector3.Lerp(FrontLeftTire.transform.localEulerAngles, new Vector3(0, 180, 0), 8 * Time.deltaTime);
+            steeringwheel.transform.localEulerAngles = Vector3.Lerp(steeringwheel.transform.localEulerAngles, new Vector3(0, 180, 0), 8 * Time.deltaTime);
+        }
+        if (dir < -1)
+        {
+            FrontRightTire.transform.localEulerAngles = Vector3.Lerp(FrontRightTire.transform.localEulerAngles, new Vector3(0, 155, 0), 8 * Time.deltaTime);
+            FrontLeftTire.transform.localEulerAngles = Vector3.Lerp(FrontLeftTire.transform.localEulerAngles, new Vector3(0, 155, 0), 8 * Time.deltaTime);
+            steeringwheel.transform.localEulerAngles = Vector3.Lerp(steeringwheel.transform.localEulerAngles, new Vector3(0, 155, 0), 8 * Time.deltaTime);
+        }
+
+    }
+    void disableItems()
+    {
+        item_manager.used_Item_Done();
+        item_manager.current_Item = "";
+    }
+    void stopDrift()
+    {
+        drifting = false;
+        playersounds.effectSounds[0].Stop();
+        playersounds.effectSounds[1].Stop();
+
+        drift_direction = 0;
+        drift_left = false;
+        drift_right = false;
+
+        //reset everything
+        Drift_time = 0;
+        //stop particles
+        for (int i = 0; i < 5; i++)
+        {
+            ParticleSystem DriftPS = Right_Wheel_Drift_PS.transform.GetChild(i).gameObject.GetComponent<ParticleSystem>(); //right wheel particles
+            ParticleSystem.MainModule PSMAIN = DriftPS.main;
+
+            ParticleSystem DriftPS2 = Left_Wheel_Drift_PS.transform.GetChild(i).gameObject.GetComponent<ParticleSystem>(); //left wheel particles
+            ParticleSystem.MainModule PSMAIN2 = DriftPS2.main;
+
+            DriftPS.Stop();
+            DriftPS2.Stop();
+
+        }
+        DriftDustLeft.GetChild(0).GetComponent<ParticleSystem>().Stop();
+        DriftDustLeft.GetChild(1).GetComponent<ParticleSystem>().Stop();
+        DriftDustRight.GetChild(0).GetComponent<ParticleSystem>().Stop();
+        DriftDustRight.GetChild(1).GetComponent<ParticleSystem>().Stop();
+    }
 
 
 

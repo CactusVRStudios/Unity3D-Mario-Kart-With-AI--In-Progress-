@@ -23,6 +23,7 @@ public class ItemManager : MonoBehaviour
     public GameObject banana;
     public GameObject coin;
     public GameObject bobomb;
+    public GameObject BlueShell;
     public Transform shellSpawnPos;
     public Transform backshellPos; //also for bananas
     public Transform BananaSpawnPos;
@@ -57,6 +58,9 @@ public class ItemManager : MonoBehaviour
     public GameObject bulletPlayer;
     public GameObject kart;
 
+    public GameObject CurrentTrailingItem;
+    public GameObject[] trailingItems;
+
 
 
     
@@ -75,6 +79,7 @@ public class ItemManager : MonoBehaviour
     {
         wayPointSystemCurrent();
 
+        if (player_script.hasitem)  //player cas collided with an itembox, and this bool is set true in the onTriggerEnter in the playerscript, and player is in need of an item, so this will start the item select method
         if (player_script.hasitem)  //player cas collided with an itembox, and this bool is set true in the onTriggerEnter in the playerscript, and player is in need of an item, so this will start the item select method
         {
             if (!start_select) //this ensures item select process does not begin until player has used up curret item
@@ -95,22 +100,43 @@ public class ItemManager : MonoBehaviour
                 {
                     if (Input.GetKeyDown(KeyCode.RightShift))
                     {
-                        player_script.Driver.SetTrigger("ThrowForward");
+                            if (CurrentTrailingItem != null)
+                            {
+                                CurrentTrailingItem.SetActive(false);
+                                CurrentTrailingItem = null;
+                            }
+                            player_script.Driver.SetTrigger("ThrowForward");
                         item_gameobjects[2].SetActive(true);
                         StartCoroutine(spawnShell(shellSpawnPos, 1));
-                    }
+                            current_Item = ""; //1 use only
+                            used_Item_Done();
+                        }
                     else if (Input.GetKeyDown(KeyCode.DownArrow))
                     {
-                        player_script.Driver.SetTrigger("ThrowBackward");
-                        item_gameobjects[2].SetActive(true);
-                        StartCoroutine(spawnShell(backshellPos, -1));
-                        if(!StarPowerUp)
-                            player_script.current_face_material = player_script.faces[1]; //look left
+                        if(CurrentTrailingItem == null)
+                        {
+                                CurrentTrailingItem = trailingItems[0]; //shell on back
+                                player_script.Driver.SetBool("hasItem", false);
+                                CurrentTrailingItem.SetActive(true);
+                        }
+                        else
+                            {
+                                CurrentTrailingItem.SetActive(false);
+                                CurrentTrailingItem = null;
+                                
+                                player_script.Driver.SetTrigger("ThrowBackward");
+                                item_gameobjects[2].SetActive(true);
+                                StartCoroutine(spawnShell(backshellPos, -1));
+                                if (!StarPowerUp)
+                                    player_script.current_face_material = player_script.faces[1]; //look left
+                                current_Item = ""; //1 use only
+                                used_Item_Done();
+                            }
+                        
                     }
 
 
-                    current_Item = ""; //1 use only
-                    used_Item_Done();
+                    
                 }
                 else if (current_Item.Equals("TripleGreenShells") && tripleItemCount > 0)
                 {
@@ -148,7 +174,12 @@ public class ItemManager : MonoBehaviour
                 {
                     if (Input.GetKeyDown(KeyCode.RightShift))
                     {
-                        player_script.Driver.SetTrigger("ThrowForward");
+                            if (CurrentTrailingItem != null)
+                            {
+                                CurrentTrailingItem.SetActive(false);
+                                CurrentTrailingItem = null;
+                            }
+                            player_script.Driver.SetTrigger("ThrowForward");
                         item_gameobjects[4].SetActive(true);
                         StartCoroutine(spawnRedShell(shellSpawnPos, 1));
                         current_Item = ""; //1 use only
@@ -156,14 +187,27 @@ public class ItemManager : MonoBehaviour
                     }
                     else if (Input.GetKeyDown(KeyCode.DownArrow))
                     {
-                        player_script.Driver.SetTrigger("ThrowBackward");
-                        item_gameobjects[4].SetActive(true);
-                        StartCoroutine(spawnRedShell(backshellPos, -1));
-                        player_script.current_face_material = player_script.faces[1]; //look left material
+                            if (CurrentTrailingItem == null)
+                            {
+                                CurrentTrailingItem = trailingItems[1]; //shell on back
+                                player_script.Driver.SetBool("hasItem", false);
+                                CurrentTrailingItem.SetActive(true);
+                            }
+                            else
+                            {
+                                CurrentTrailingItem.SetActive(false);
+                                CurrentTrailingItem = null;
+                                player_script.Driver.SetTrigger("ThrowBackward");
+                                item_gameobjects[4].SetActive(true);
+                                StartCoroutine(spawnRedShell(backshellPos, -1));
+                                player_script.current_face_material = player_script.faces[1]; //look left material
+                                current_Item = ""; //1 use only
+                                used_Item_Done();
+                            }
+                            
                     }
 
-                    current_Item = ""; //1 use only
-                    used_Item_Done();
+                    
 
                 }
                 else if (current_Item.Equals("TripleRedShells") && tripleItemCount > 0)
@@ -246,18 +290,39 @@ public class ItemManager : MonoBehaviour
                 {
                     if (Input.GetKeyDown(KeyCode.RightShift))
                     {
+                        if(CurrentTrailingItem != null)
+                            {
+                                CurrentTrailingItem.SetActive(false);
+                                CurrentTrailingItem = null;
+                            }
                         player_script.Driver.SetTrigger("ThrowForward");
                         StartCoroutine(spawnBanana(1));
+                            current_Item = ""; //1 use only
+                            used_Item_Done();
                     }
                     if (Input.GetKeyDown(KeyCode.DownArrow))
                     {
-                        StartCoroutine(spawnBanana(-1));
-                        player_script.Driver.SetTrigger("ThrowBackward");
-                        if (!StarPowerUp)
-                            player_script.current_face_material = player_script.faces[1]; //look left
+                            if (CurrentTrailingItem == null)
+                            {
+                                CurrentTrailingItem = trailingItems[2]; //banana on back
+                                player_script.Driver.SetBool("hasItem", false);
+                                CurrentTrailingItem.SetActive(true);
+
+                            }
+                            else
+                            {
+                                StartCoroutine(spawnBanana(-1));
+                                CurrentTrailingItem.SetActive(false);
+                                CurrentTrailingItem = null;
+                                player_script.Driver.SetTrigger("ThrowBackward");
+                                if (!StarPowerUp)
+                                    player_script.current_face_material = player_script.faces[1]; //look left
+                                current_Item = ""; //1 use only
+                                used_Item_Done();
+                            }
+                            
                     }
-                    current_Item = ""; //1 use only
-                    used_Item_Done();
+                    
                 }
                 else if (current_Item.Equals("TripleBananas"))
                 {
@@ -346,7 +411,24 @@ public class ItemManager : MonoBehaviour
                     if (Input.GetKeyDown(KeyCode.RightShift))
                     {
                         player_script.Driver.SetTrigger("ThrowForward");
-                        StartCoroutine(useBobomb(-1));
+                        StartCoroutine(useBobomb(1));
+                        used_Item_Done();
+                        current_Item = "";
+                    }
+                    else if (Input.GetKeyDown(KeyCode.DownArrow))
+                    {
+                            player_script.Driver.SetTrigger("ThrowBackward");
+                            StartCoroutine(useBobomb(-1));
+                            used_Item_Done();
+                            current_Item = "";
+                    }
+                }
+                else if (current_Item.Equals("BlueShell"))
+                {
+                    if (Input.GetKeyDown(KeyCode.RightShift))
+                    {
+                        player_script.Driver.SetTrigger("ThrowForward");
+                        StartCoroutine(useBlueShell());
                         used_Item_Done();
                         current_Item = "";
                     }
@@ -374,9 +456,7 @@ public class ItemManager : MonoBehaviour
     IEnumerator Item_Select()
     {
         //random index
-        //item_index = Random.Range(11,12);
-
-        item_index = Random.Range(0, items_possible.Length);
+        item_index = Random.Range(0, 14);
 
 
 
@@ -492,15 +572,15 @@ public class ItemManager : MonoBehaviour
     }
     IEnumerator useBobomb(int direction)
     {
-        if(direction == -1)
+        if(direction == 1)
         {
             yield return new WaitForSeconds(0.1f);
             item_gameobjects[item_index].SetActive(false);
 
             GameObject clone = Instantiate(bobomb, BananaSpawnPos.position, BananaSpawnPos.rotation);
             clone.SetActive(true);
-            clone.GetComponent<Rigidbody>().drag = 10;
-            clone.GetComponent<Bobomb>().bomb_thrown(transform.InverseTransformDirection(GetComponent<Rigidbody>().velocity).z * 500);
+            //clone.GetComponent<Rigidbody>().drag = 10;
+            clone.GetComponent<Bobomb>().bomb_thrown(transform.InverseTransformDirection(GetComponent<Rigidbody>().velocity).z * 400);
             clone.GetComponent<AudioSource>().enabled = true;
 
             for (int i = 0; i < clone.GetComponent<Bobomb>().renderers.Length; i++)
@@ -514,6 +594,38 @@ public class ItemManager : MonoBehaviour
             clone.GetComponent<Bobomb>().whoThrewBomb = gameObject.name;
 
         }
+        if(direction == -1)
+        {
+            yield return new WaitForSeconds(0.1f);
+            item_gameobjects[item_index].SetActive(false);
+
+            GameObject clone = Instantiate(bobomb, backshellPos.position, BananaSpawnPos.rotation);
+            clone.SetActive(true);
+            clone.GetComponent<AudioSource>().enabled = true;
+            clone.GetComponent<Bobomb>().bounce_count = 4;
+
+            for (int i = 0; i < clone.GetComponent<Bobomb>().renderers.Length; i++)
+            {
+                clone.GetComponent<Bobomb>().renderers[i].enabled = true;
+            }
+            for (int i = 0; i < clone.GetComponent<Bobomb>().spark.Length; i++)
+            {
+                clone.GetComponent<Bobomb>().spark[i].SetActive(true);
+            }
+            clone.GetComponent<Bobomb>().whoThrewBomb = gameObject.name;
+
+            for (int i = 0; i < 75; i++)
+            {
+                if (!StarPowerUp)
+                    player_script.current_face_material = player_script.faces[1]; //look left
+                yield return new WaitForSeconds(0.01f);
+            }
+            if (!StarPowerUp)
+                player_script.current_face_material = player_script.faces[2]; //blink
+            yield return new WaitForSeconds(0.1f);
+            if (!StarPowerUp)
+                player_script.current_face_material = player_script.faces[0];//normal
+        }
     }
     IEnumerator spawnBanana(int direction)
     {
@@ -523,7 +635,7 @@ public class ItemManager : MonoBehaviour
             yield return new WaitForSeconds(0.1f);
             item_gameobjects[1].SetActive(false);
             clone = Instantiate(banana, BananaSpawnPos.position, BananaSpawnPos.rotation);
-            clone.GetComponent<Banana>().Banana_thrown(transform.InverseTransformDirection(GetComponent<Rigidbody>().velocity).z * 500);
+            clone.GetComponent<Banana>().Banana_thrown(transform.InverseTransformDirection(GetComponent<Rigidbody>().velocity).z * 200);
             clone.GetComponent<Banana>().whoThrewBanana = gameObject.name;
         }
         else
@@ -557,7 +669,6 @@ public class ItemManager : MonoBehaviour
         yield return new WaitForSeconds(0.3f);
         playersounds.effectSounds[9].Play();
     }
-
     IEnumerator UseStar()
     {
         item_gameobjects[item_index].SetActive(false);
@@ -602,7 +713,6 @@ public class ItemManager : MonoBehaviour
 
 
     }
-
     IEnumerator UseBullet()
     {
         item_gameobjects[item_index].SetActive(false);
@@ -621,13 +731,22 @@ public class ItemManager : MonoBehaviour
         isBullet = false;
         bulletPlayer.SetActive(false);
         kart.SetActive(true);
-        player_script.currentspeed = 73;
+        player_script.currentspeed = 70;
         playersounds.BulletSounds[2].Play();
         playersounds.BulletSounds[0].Stop();
 
 
     }
 
+    IEnumerator useBlueShell()
+    {
+        yield return new WaitForSeconds(0.15f);
+        GameObject clone = Instantiate(BlueShell, shellSpawnPos.position, shellSpawnPos.transform.rotation);
+        clone.SetActive(true);
+        clone.GetComponent<BlueShell>().current_node = currentWayPoint + 1;
+        item_gameobjects[item_index].SetActive(false); //hand shell
+        clone.GetComponent<BlueShell>().who_threw_shell = gameObject.name;
+    }
 
 
 

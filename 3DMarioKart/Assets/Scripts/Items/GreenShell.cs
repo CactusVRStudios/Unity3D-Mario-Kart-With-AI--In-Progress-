@@ -18,6 +18,8 @@ public class GreenShell : MonoBehaviour
 
     bool grounded = false;
 
+    public LayerMask mask;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -44,9 +46,7 @@ public class GreenShell : MonoBehaviour
 
         
         Vector3 vel = transform.InverseTransformDirection(rb.velocity);
-        vel.x *= 1;
-        vel.y /= 5;
-        vel.z *= 1;
+        rb.AddForce(Vector3.down * 10000 * Time.deltaTime, ForceMode.Acceleration);
         rb.velocity = transform.TransformDirection(vel);
         
 
@@ -58,7 +58,7 @@ public class GreenShell : MonoBehaviour
         //ground normal rotation
         Ray ground = new Ray(transform.position, -transform.up);
         RaycastHit hit;
-        if (Physics.Raycast(ground, out hit, 10))
+        if (Physics.Raycast(ground, out hit, 10, mask))
         {
             transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(transform.up * 2, hit.normal) * transform.rotation, 5f * Time.deltaTime);
         }
@@ -113,9 +113,9 @@ public class GreenShell : MonoBehaviour
             if(collision.gameObject.tag == "Opponent") 
             {
                 collision.gameObject.GetComponent<OpponentItemManager>().hitByShell(); //the opponent has the function that does all this work
-                if (who_threw_shell == "Player")
+                if (who_threw_shell == "Mario")
                 {
-                    GameObject.Find("Player").GetComponent<Player>().Driver.SetTrigger("HitItem");
+                    GameObject.Find("Mario").GetComponent<Player>().Driver.SetTrigger("HitItem");
                 }
                 destroyShell();
                 
@@ -142,7 +142,7 @@ public class GreenShell : MonoBehaviour
         }
     }
 
-    private void destroyShell()
+    public void destroyShell()
     {
         int x = transform.GetChild(0).childCount; //particle systems
         for (int i = 0; i < x; i++)

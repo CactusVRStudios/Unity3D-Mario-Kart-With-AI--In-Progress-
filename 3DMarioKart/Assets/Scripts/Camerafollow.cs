@@ -32,8 +32,12 @@ public class Camerafollow : MonoBehaviour
         }
         else
         {
-            //transform.rotation = Quaternion.Slerp(transform.rotation, player.rotation, 3f * Time.deltaTime);
-            transform.rotation = Quaternion.Slerp(transform.rotation,Quaternion.Euler(player.eulerAngles.x, player.eulerAngles.y, 0), 3 * Time.deltaTime);
+            float angle = transform.localEulerAngles.x;
+            angle = (angle > 180) ? angle - 360 : angle;
+
+            transform.rotation = Quaternion.Slerp(transform.rotation,Quaternion.Euler(0, player.eulerAngles.y, 0), 3 * Time.deltaTime);
+
+            
         }
 
         if (playerscript.JUMP_PANEL)
@@ -46,15 +50,19 @@ public class Camerafollow : MonoBehaviour
 
 
 
-        if (playerscript.Boost && !playerscriptItem.isBullet)
+        if (playerscript.Boost && !playerscriptItem.isBullet && !RACE_MANAGER.RACE_COMPLETED)
         {
-            transform.GetChild(0).localPosition = Vector3.Lerp(transform.GetChild(0).localPosition, boost_pos, 6f * Time.deltaTime);
+            transform.GetChild(0).localPosition = Vector3.Lerp(transform.GetChild(0).localPosition, boost_pos, 4f * Time.deltaTime);
         }
         if(!playerscript.Boost && !playerscriptItem.isBullet)
         {
-            transform.GetChild(0).localPosition = Vector3.Lerp(transform.GetChild(0).localPosition, orig_pos, 6 * Time.deltaTime);
+            transform.GetChild(0).localPosition = Vector3.Lerp(transform.GetChild(0).localPosition, orig_pos, 3 * Time.deltaTime);
         }
-        if (playerscriptItem.isBullet)
+        if (RACE_MANAGER.RACE_COMPLETED)
+        {
+            transform.GetChild(0).localPosition = Vector3.Lerp(transform.GetChild(0).localPosition, orig_pos, 3 * Time.deltaTime);
+        }
+        if (playerscriptItem.isBullet && !RACE_MANAGER.RACE_COMPLETED)
         {
             transform.GetChild(0).localPosition = Vector3.Lerp(transform.GetChild(0).localPosition, bulletPos, 6 * Time.deltaTime);
         }

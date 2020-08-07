@@ -9685,7 +9685,7 @@ Transform:
   m_GameObject: {fileID: 468335106624062509}
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: -16888.93, y: 23258.86, z: -11889.39}
-  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
+  m_LocalScale: {x: 1.7, y: 1.7, z: 1.7}
   m_Children:
   - {fileID: 468335106445671187}
   - {fileID: 4829381086084668895}
@@ -9707,6 +9707,9 @@ MonoBehaviour:
   myVelocity: {x: 0, y: 0, z: 0}
   lifetime: 0
   who_threw_shell: 
+  mask:
+    serializedVersion: 2
+    m_Bits: 1832755
 --- !u!135 &468335106624062505
 SphereCollider:
   m_ObjectHideFlags: 0

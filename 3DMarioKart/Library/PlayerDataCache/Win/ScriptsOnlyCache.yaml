@@ -2,19 +2,23 @@ ScriptsOnlyBuild:
   usedScripts:
     Assembly-CSharp.dll:
     - Banana
+    - BlueShell
     - Bobomb
     - Camerafollow
     - ComputerDriver
     - DriverPath
     - GreenShell
     - ItemManager
+    - LapCounter
     - OpponentItemManager
     - OrbitingItemHit
     - Player
     - PlayerSounds
     - RACE_MANAGER
     - RedShell
+    - ResultsUI
     - ScoreCount
+    - UIGradient
     - UtilityFunctions
     Unity.2D.Tilemap.Editor.dll:
     - UnityEditor.Tilemaps.GridPaintingState
@@ -59,6 +63,7 @@ ScriptsOnlyBuild:
     - UnityEngine.UI.GraphicRaycaster
     - UnityEngine.UI.Image
     - UnityEngine.UI.Mask
+    - UnityEngine.UI.Outline
     - UnityEngine.UI.RectMask2D
     - UnityEngine.UI.Text
   sceneClasses:
@@ -116,63 +121,73 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 10732}
     - Class: 114
-      Script: {instanceID: 10760}
+      Script: {instanceID: 10762}
     - Class: 114
-      Script: {instanceID: 10786}
+      Script: {instanceID: 10788}
     - Class: 114
-      Script: {instanceID: 10930}
+      Script: {instanceID: 10932}
     - Class: 114
-      Script: {instanceID: 10952}
+      Script: {instanceID: 10954}
     - Class: 114
-      Script: {instanceID: 11070}
+      Script: {instanceID: 11074}
     - Class: 114
-      Script: {instanceID: 11156}
+      Script: {instanceID: 11160}
     - Class: 114
-      Script: {instanceID: 11364}
+      Script: {instanceID: 11368}
     - Class: 114
-      Script: {instanceID: 11454}
+      Script: {instanceID: 11460}
     - Class: 114
-      Script: {instanceID: 11538}
+      Script: {instanceID: 11520}
     - Class: 114
-      Script: {instanceID: 11722}
+      Script: {instanceID: 11546}
     - Class: 114
-      Script: {instanceID: 11732}
+      Script: {instanceID: 11730}
     - Class: 114
-      Script: {instanceID: 11932}
+      Script: {instanceID: 11740}
     - Class: 114
-      Script: {instanceID: 12122}
+      Script: {instanceID: 11940}
     - Class: 114
-      Script: {instanceID: 12152}
+      Script: {instanceID: 12056}
     - Class: 114
-      Script: {instanceID: 12466}
+      Script: {instanceID: 12132}
     - Class: 114
-      Script: {instanceID: 12516}
+      Script: {instanceID: 12162}
     - Class: 114
-      Script: {instanceID: 12664}
+      Script: {instanceID: 12462}
     - Class: 114
-      Script: {instanceID: 12686}
+      Script: {instanceID: 12478}
     - Class: 114
-      Script: {instanceID: 12820}
+      Script: {instanceID: 12528}
     - Class: 114
-      Script: {instanceID: 12892}
+      Script: {instanceID: 12676}
     - Class: 114
-      Script: {instanceID: 12974}
+      Script: {instanceID: 12698}
     - Class: 114
-      Script: {instanceID: 13628}
+      Script: {instanceID: 12834}
     - Class: 114
-      Script: {instanceID: 13664}
+      Script: {instanceID: 12906}
     - Class: 114
-      Script: {instanceID: 13846}
+      Script: {instanceID: 12990}
     - Class: 114
-      Script: {instanceID: 13934}
+      Script: {instanceID: 13256}
     - Class: 114
-      Script: {instanceID: 14128}
+      Script: {instanceID: 13646}
     - Class: 114
-      Script: {instanceID: 14152}
+      Script: {instanceID: 13682}
     - Class: 114
-      Script: {instanceID: 14236}
+      Script: {instanceID: 13864}
     - Class: 114
-      Script: {instanceID: 14340}
+      Script: {instanceID: 13952}
+    - Class: 114
+      Script: {instanceID: 14146}
+    - Class: 114
+      Script: {instanceID: 14170}
+    - Class: 114
+      Script: {instanceID: 14254}
+    - Class: 114
+      Script: {instanceID: 14256}
+    - Class: 114
+      Script: {instanceID: 14358}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -224,6 +239,12 @@ ScriptsOnlyBuild:
     assemblyName: UnityEngine.UI.dll
     namespaceName: UnityEngine.UI
     className: CanvasScaler
+  - hash:
+      serializedVersion: 2
+      Hash: 63be63d902f314fae3cae0911aae8b30
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: SetDirty
   - hash:
       serializedVersion: 2
       Hash: 12327e76ce747d7fcf611172a8220f59
@@ -332,6 +353,12 @@ ScriptsOnlyBuild:
     assemblyName: Unity.Postprocessing.Runtime.dll
     namespaceName: UnityEngine.Rendering.PostProcessing
     className: MotionBlur
+  - hash:
+      serializedVersion: 2
+      Hash: 65555cc9cb1f75072d0f6ee9ecd39fe2
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: UICornersGradient
   - hash:
       serializedVersion: 2
       Hash: f00ca901b734f71f99db8f25241154c4
@@ -556,6 +583,12 @@ ScriptsOnlyBuild:
     className: AspectRatioFitter
   - hash:
       serializedVersion: 2
+      Hash: 83b46b966fc8c4c189358323388fc299
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: BlueShell
+  - hash:
+      serializedVersion: 2
       Hash: 71bb6a6b6c8f052f948db64c7dd3ca4f
     assemblyName: UnityEngine.UI.dll
     namespaceName: UnityEngine.UI
@@ -616,7 +649,7 @@ ScriptsOnlyBuild:
     className: LWRPAdditionalCameraData
   - hash:
       serializedVersion: 2
-      Hash: 74bd7cc3dd92adfcb63e06104231016d
+      Hash: 269236fa484995307405e9e6be2456a6
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: GreenShell
@@ -736,6 +769,12 @@ ScriptsOnlyBuild:
     className: Joystick
   - hash:
       serializedVersion: 2
+      Hash: 881a68ace07b629cbb75b9322c5bdf75
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: LapCounter
+  - hash:
+      serializedVersion: 2
       Hash: 71bb6a6b6c8f052f948db64c7dd3ca4f
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
@@ -754,7 +793,7 @@ ScriptsOnlyBuild:
     className: PlatformSpecificContent
   - hash:
       serializedVersion: 2
-      Hash: d302db163bbd7c35a2fa6e06fa9a5338
+      Hash: b9c899591052645f800daf9b8dc2e044
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: RACE_MANAGER
@@ -862,6 +901,12 @@ ScriptsOnlyBuild:
     className: AutoMoveAndRotate
   - hash:
       serializedVersion: 2
+      Hash: f84d75ae970a815335f146c63c5b4d2d
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: ResultsUI
+  - hash:
+      serializedVersion: 2
       Hash: 71bb6a6b6c8f052f948db64c7dd3ca4f
     assemblyName: Assembly-CSharp-firstpass.dll
     namespaceName: 
@@ -964,7 +1009,7 @@ ScriptsOnlyBuild:
     className: CarController
   - hash:
       serializedVersion: 2
-      Hash: 98300518ec2b28af03a4318295b1f3e1
+      Hash: 54f3569d43a75d38f055710f42a311c3
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: OpponentItemManager
@@ -1024,6 +1069,12 @@ ScriptsOnlyBuild:
     className: AspectRatioFix
   - hash:
       serializedVersion: 2
+      Hash: 65555cc9cb1f75072d0f6ee9ecd39fe2
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: UITextCornersGradient
+  - hash:
+      serializedVersion: 2
       Hash: 71bb6a6b6c8f052f948db64c7dd3ca4f
     assemblyName: Assembly-CSharp-firstpass.dll
     namespaceName: UnityStandardAssets.Effects
@@ -1048,7 +1099,7 @@ ScriptsOnlyBuild:
     className: FastMotionBlur
   - hash:
       serializedVersion: 2
-      Hash: 48ef180e9f15204989cc5450fc69efe5
+      Hash: 0e3de925835ba9b4d8a05c5d2aeff3ac
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: ItemManager
@@ -1078,13 +1129,19 @@ ScriptsOnlyBuild:
     className: Click
   - hash:
       serializedVersion: 2
+      Hash: aeb18a89d94bee2209d37aabd28aa392
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: UITextGradient
+  - hash:
+      serializedVersion: 2
       Hash: 5ad4aa237d47ac2bab17bacb672edf7a
     assemblyName: UnityEngine.UI.dll
     namespaceName: UnityEngine.UI
     className: VerticalLayoutGroup
   - hash:
       serializedVersion: 2
-      Hash: a8663bfdb35e18203ec2c4bfdb37905c
+      Hash: fa2651a793365032e69b25ef54e8c8fa
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: Player
@@ -1202,6 +1259,12 @@ ScriptsOnlyBuild:
     assemblyName: Assembly-CSharp-firstpass.dll
     namespaceName: UnityStandardAssets.Vehicles.Aeroplane
     className: AeroplanePropellerAnimator
+  - hash:
+      serializedVersion: 2
+      Hash: 672d2b4929510ad7ec5577d94b50f05c
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: UIGradient
   - hash:
       serializedVersion: 2
       Hash: 71bb6a6b6c8f052f948db64c7dd3ca4f
@@ -1426,7 +1489,7 @@ ScriptsOnlyBuild:
     className: Explosive
   - hash:
       serializedVersion: 2
-      Hash: 3491390b23b80aa17988f516bc6b2149
+      Hash: 74c9b3587cb2f6a779eb94df44d44386
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: PlayerSounds
@@ -1492,7 +1555,7 @@ ScriptsOnlyBuild:
     className: BaseInput
   - hash:
       serializedVersion: 2
-      Hash: 351880a822fafa7c5cff62c18041cd4c
+      Hash: 061e3bf4b1a91b2d0d320c8ae34cfdbc
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: ComputerDriver

@@ -41,10 +41,12 @@ public class Banana : MonoBehaviour
 
     public void Move()
     {
-        
+        rb.AddForce(Vector3.down * 10000 * Time.deltaTime, ForceMode.Acceleration);
+
     }
 
     public void Banana_thrown(float extraForward){
+        //throwForceUp = Mathf.SmoothStep(throwForceUp, -50000, 8 * Time.deltaTime);
         rb.AddForce(transform.up * throwForceUp * Time.deltaTime, ForceMode.Impulse);
         rb.AddForce(-transform.forward * (throwForceForward + extraForward) * Time.deltaTime, ForceMode.Impulse);
     }
@@ -58,7 +60,6 @@ public class Banana : MonoBehaviour
         if (Physics.Raycast(ground, out hit, 10))
         {
             transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(transform.up * 2, hit.normal) * transform.rotation, 9f * Time.deltaTime);
-            Debug.DrawRay(hit.point, hit.normal, Color.white, 20f);
         }
     }
 }

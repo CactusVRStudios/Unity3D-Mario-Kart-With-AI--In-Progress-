@@ -12,7 +12,8 @@ public class Bobomb : MonoBehaviour
 
     public float lifetime;
 
-    private float bounce_count = 1;
+    [HideInInspector]
+    public float bounce_count = 1;
     public float bounceForce;
     public GameObject explosion;
     public Transform explosionPos;
@@ -48,6 +49,8 @@ public class Bobomb : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
+        rb.AddForce(Vector3.down * 10000 * Time.deltaTime, ForceMode.Acceleration);
+
         if (landed)
         {
             Move();
@@ -105,7 +108,6 @@ public class Bobomb : MonoBehaviour
         if (Physics.Raycast(ground, out hit, 5))
         {
             transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.FromToRotation(transform.up * 2, hit.normal) * transform.rotation, 9f * Time.deltaTime);
-            Debug.DrawRay(hit.point, hit.normal, Color.white, 20f);
         }
     }
 
@@ -117,8 +119,7 @@ public class Bobomb : MonoBehaviour
 
             if(bounce_count < 4)
             {
-                rb.AddForce(transform.up * bounceForce/bounce_count * Time.deltaTime, ForceMode.Impulse);
-                rb.drag = 20;
+                rb.AddForce(transform.up * bounceForce/(bounce_count * 1.5f) * Time.deltaTime, ForceMode.Impulse);
                 yield return new WaitForSeconds(0.01f);
                 bounce_count++;
             }

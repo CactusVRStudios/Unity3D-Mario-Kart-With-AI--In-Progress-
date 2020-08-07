@@ -89,7 +89,7 @@ public class UtilityFunctions : MonoBehaviour
                 gameObject.GetComponent<Animator>().SetBool("moustaceMove", true);
             }
 
-            if (playerscript.currentspeed > 40)
+            if (playerscript.REALCURRENTSPEED > 40)
             {
                 gameObject.GetComponent<Animator>().SetBool("moustaceMove", true);
             }
@@ -107,7 +107,7 @@ public class UtilityFunctions : MonoBehaviour
     {
         if(gameObject.name == "Hair")
         {
-            if(playerscript.currentspeed > 40)
+            if(playerscript.REALCURRENTSPEED > 40)
             {
                 gameObject.GetComponent<Animator>().SetBool("HairMove", true);
             }
@@ -210,6 +210,45 @@ public class UtilityFunctions : MonoBehaviour
             playerscript.MarioFace.material = playerscript.faces[3];
             yield return new WaitForSeconds(0.016f);
         }
+    }
+
+    void updatePositionUI()
+    {
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            if (i + 1 != GameObject.FindGameObjectWithTag("Player").GetComponent<LapCounter>().Position)
+            {
+                transform.GetChild(i).gameObject.SetActive(false);
+            }
+            else
+            {
+                transform.GetChild(i).gameObject.SetActive(true);
+            }
+        }
+    }
+
+    void explode()
+    {
+        GameObject clone = Instantiate(transform.parent.GetComponent<BlueShell>().blueExplosion, transform.position + new Vector3(0, 1, 0), transform.parent.GetComponent<BlueShell>().blueExplosion.transform.rotation);
+        if(transform.parent.GetComponent<BlueShell>().who_threw_shell != transform.parent.GetComponent<BlueShell>().chase_opponent.name)
+        {
+            if(transform.parent.GetComponent<BlueShell>().who_threw_shell == "Mario")
+            {
+                GameObject.Find("Mario").GetComponent<Player>().Driver.SetTrigger("HitItem");
+            }
+        }
+        if(Camera.main.GetComponent<Animator>() != null)
+        {
+            Camera.main.GetComponent<Animator>().SetTrigger("Shake2");
+        }
+        clone.GetComponent<AudioSource>().Play();
+        Instantiate(transform.parent.GetComponent<BlueShell>().smoke, clone.transform.GetChild(0).position, transform.parent.GetComponent<BlueShell>().smoke.transform.rotation);
+        Destroy(transform.parent.gameObject);
+    }
+
+    public void playResultSound()
+    {
+        GetComponent<AudioSource>().Play();
     }
 
 

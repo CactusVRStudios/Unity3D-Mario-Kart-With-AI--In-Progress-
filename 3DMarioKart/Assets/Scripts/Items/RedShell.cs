@@ -127,7 +127,9 @@ public class RedShell : MonoBehaviour
     }
     void move()
     {
-        rb.velocity = transform.forward * 5000 * Time.deltaTime;
+        Vector3 vel = transform.forward * 5000 * Time.deltaTime;
+        vel.y = rb.velocity.y / 1.5f;
+        rb.velocity = vel;
     }
     void DetectTarget()
     {
@@ -180,6 +182,31 @@ public class RedShell : MonoBehaviour
 
         }
 
+        if(other.gameObject.tag == "TrailingItem")
+        {
+            if(other.gameObject.name == "TrailingBanana")
+            {
+                other.transform.parent.parent.parent.GetComponent<ItemManager>().CurrentTrailingItem.SetActive(false);
+                other.transform.parent.parent.parent.GetComponent<ItemManager>().CurrentTrailingItem = null;
+                other.transform.parent.parent.parent.GetComponent<ItemManager>().current_Item = "";
+                other.transform.parent.parent.parent.GetComponent<ItemManager>().used_Item_Done();
+                destroyShell();
+            }
+            else
+            {
+                int x = other.transform.GetChild(0).childCount; //particle systems
+                for (int i = 0; i < x; i++)
+                {
+                    other.transform.GetChild(0).GetChild(i).GetComponent<ParticleSystem>().Play();
+                }
+                other.transform.parent.parent.parent.GetComponent<ItemManager>().CurrentTrailingItem.SetActive(false);
+                other.transform.parent.parent.parent.GetComponent<ItemManager>().CurrentTrailingItem = null;
+                other.transform.parent.parent.parent.GetComponent<ItemManager>().current_Item = "";
+                other.transform.parent.parent.parent.GetComponent<ItemManager>().used_Item_Done();
+                destroyShell();
+            }
+        }
+
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -216,14 +243,26 @@ public class RedShell : MonoBehaviour
             if (collision.gameObject.tag == "Opponent")
             {
                 collision.gameObject.GetComponent<OpponentItemManager>().hitByShell(); //the opponent has the function that does all this work
-                if (who_threw_shell == "Player")
+                if (who_threw_shell == "Mario")
                 {
-                    GameObject.Find("Player").GetComponent<Player>().Driver.SetTrigger("HitItem");
+                    GameObject.Find("Mario").GetComponent<Player>().Driver.SetTrigger("HitItem");
                 }
                 destroyShell();
-                if (who_threw_shell == "Player")
+                if (who_threw_shell == "Mario")
                 {
                     //for loop with player face
+                }
+            }
+            if(collision.gameObject.tag == "Player")
+            {
+                if(who_threw_shell != collision.gameObject.name)
+                {
+                    if (!collision.gameObject.GetComponent<ItemManager>().StarPowerUp)
+                    {
+                        StartCoroutine(collision.gameObject.GetComponent<Player>().hitByShell()); //the player has the function that does all this work
+                        GameObject.Find("Main Camera").GetComponent<Animator>().SetTrigger("ShellHit");
+                    }
+                    destroyShell();
                 }
             }
 
@@ -249,7 +288,7 @@ public class RedShell : MonoBehaviour
         }
     }
 
-    private void destroyShell()
+    public void destroyShell()
     {
         int x = transform.GetChild(0).childCount; //particle systems
         for (int i = 0; i < x; i++)

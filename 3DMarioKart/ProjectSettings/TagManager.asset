@@ -22,6 +22,10 @@ TagManager:
   - ColliderInAir
   - CourseMusic
   - Explosion
+  - NextLapCollider
+  - CancelDownForce
+  - SlowDownComputer
+  - TrailingItem
   layers:
   - Default
   - TransparentFX
@@ -44,10 +48,10 @@ TagManager:
   - JumpPanel
   - Fence
   - PlayerBody
-  - 
-  - 
-  - 
-  - 
+  - Checkpoints
+  - Opponent
+  - PanelsAndTriggers
+  - TrailingItems
   - 
   - 
   - 
